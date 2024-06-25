@@ -34,6 +34,7 @@ mongoose.connect(process.env.MONGODB_URL).then(() => {
 });
 
 const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
     email: String,
     password: String,
     googleId: String,
@@ -60,13 +61,19 @@ passport.use(new GoogleStrategy({
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: "http://localhost:3000/auth/google/secrets",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
-    scope: ["profile"]
+    scope: ["profile", "email"]
   },
   function(accessToken, refreshToken, profile, cb) {
-    console.log(profile);
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
-      return cb(err, user);
-    });
+    const email = profile.emails && profile.emails[0] && profile.emails[0].value;
+    const username = email || `user_${profile.id}`;
+    
+    User.findOrCreate(
+      { googleId: profile.id },
+      { username: username }, 
+      function (err, user) {
+        return cb(err, user);
+      }
+    );
   }
 ));
 
@@ -134,6 +141,14 @@ app.get("/logout", function(req, res){
 });
 
 app.post("/register", function(req,res){
+    const username = req.body.username;
+    const password = req.body.password;
+
+    if (!username || !password) {
+        console.log("Username or password is missing");
+        return res.redirect("/register");
+    }
+
     User.register({username: req.body.username}, req.body.password, function(err, user){
         if(err){
             console.log(err);
@@ -148,6 +163,14 @@ app.post("/register", function(req,res){
 });
 
 app.post("/login", function(req,res){
+    const username = req.body.username;
+    const password = req.body.password;
+
+    if (!username || !password) {
+        console.log("Username or password is missing");
+        return res.redirect("/login");
+    }
+
     const user = new User({
         username: req.body.username,
         password: req.body.password
