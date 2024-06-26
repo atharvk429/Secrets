@@ -188,6 +188,15 @@ app.post("/login", function(req,res){
     });
 });
 
-app.listen(3000, function(){
-    console.log("Server started on port 3000.");
+// app.listen(3000, function(){
+//     console.log("Server started on port 3000.");
+// });
+
+
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, '0.0.0.0', function() {
+    console.log(`Server started on port ${PORT}.`);
 });
+
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 120000;
