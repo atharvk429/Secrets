@@ -34,7 +34,7 @@ mongoose.connect(process.env.MONGODB_URL).then(() => {
 });
 
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
+    username: { type: String, unique: true },
     email: String,
     password: String,
     googleId: String,
