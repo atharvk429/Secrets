@@ -11,8 +11,12 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const findOrCreatePlugin = require("mongoose-findorcreate");
+const crypto = require('crypto');
 
 const app = express();
+const algorithm = 'aes-256-cbc';
+const key = crypto.scryptSync(process.env.SECRET, 'salt', 32);
+const iv = crypto.randomBytes(16);
 
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
@@ -27,6 +31,23 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+function encrypt(text) {
+    let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+    let encrypted = cipher.update(text);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+function decrypt(text) {
+    let textParts = text.split(':');
+    let iv = Buffer.from(textParts.shift(), 'hex');
+    let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+}
+  
 mongoose.connect(process.env.MONGODB_URL).then(() => {
     console.log("Connected to MongoDB Atlas");
 }).catch((err) => {
@@ -102,6 +123,9 @@ app.get("/register", function(req,res){
 app.get("/secrets", function(req, res){
     User.find({"secret":{$ne:null}})
         .then(function(foundUsers){
+            const usersWithDecryptedSecrets = foundUsers.map(user => {
+                return { ...user.toObject(), secret: decrypt(user.secret) };
+            });
             res.render("secrets", {usersWithSecrets: foundUsers});
         })
         .catch(function(err){
@@ -120,14 +144,18 @@ app.get("/submit", function(req,res){
 
 app.post("/submit", function(req,res){
     const submittedSecret = req.body.secret;
+    const encryptedSecret = encrypt(submittedSecret);
 
     User.findOne({_id:req.user._id})
         .then(function(foundUser){
             if(foundUser){
-                foundUser.secret=submittedSecret;
+                foundUser.secret=encryptedSecret;
                 foundUser.save();
                 res.redirect("/secrets");
             }
+        })
+        .catch(function(err){
+            console.log(err);
         });
 });
 
