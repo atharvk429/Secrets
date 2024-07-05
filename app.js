@@ -11,11 +11,10 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const findOrCreatePlugin = require("mongoose-findorcreate");
-const CryptoJS = require("crypto-js");
+const crypto = require('crypto');
 
 const app = express();
-const key = process.env.SECRET_KEY;
-const iv = CryptoJS.lib.WordArray.random(16);
+const key = process.env.SECRET;
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -32,19 +31,19 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-function encrypt(text) {
-    const encrypted = CryptoJS.AES.encrypt(text, key, { iv: iv }).toString();
-    return iv.toString(CryptoJS.enc.Hex) + encrypted;
-  }
-  
-  function decrypt(ciphertext) {
-    const ivHex = ciphertext.substr(0, 32); // Assuming IV is 16 bytes (32 hex characters)
-    const encrypted = ciphertext.substr(32);
-    const decrypted = CryptoJS.AES.decrypt(encrypted, key, {
-      iv: CryptoJS.enc.Hex.parse(ivHex),
-    }).toString(CryptoJS.enc.Utf8);
-    return decrypted;
-  }  
+function encrypt(text){
+  var cipher = crypto.createCipher('aes-256-cbc', key)
+  var crypted = cipher.update(text,'utf8','hex')
+  crypted += cipher.final('hex');
+  return crypted;
+}
+
+function decrypt(text){
+  var decipher = crypto.createDecipher('aes-256-cbc',key)
+  var dec = decipher.update(text,'hex','utf8')
+  dec += decipher.final('utf8');
+  return dec;
+}
 
 mongoose
   .connect(process.env.MONGODB_URL)
@@ -131,8 +130,11 @@ app.get("/register", function (req, res) {
 app.get("/secrets", function (req, res) {
   User.find({ secret: { $ne: null } })
     .then(function (foundUsers) {
-      const usersWithDecryptedSecrets = foundUsers.map((user) => {
-        return { ...user.toObject(), secret: decrypt(user.secret) };
+      const usersWithDecryptedSecrets = foundUsers.map(user => {
+        return {
+            ...user.toObject(),
+            secret: decrypt(user.secret) // Assuming you have a decrypt function
+        };
       });
       res.render("secrets", { usersWithSecrets: usersWithDecryptedSecrets });
     })
