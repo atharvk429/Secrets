@@ -14,7 +14,8 @@ const findOrCreatePlugin = require("mongoose-findorcreate");
 const CryptoJS = require("crypto-js");
 
 const app = express();
-const secretKey = process.env.SECRET_KEY;
+const key = process.env.SECRET_KEY;
+const iv = CryptoJS.lib.WordArray.random(16);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -32,13 +33,18 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 function encrypt(text) {
-    return CryptoJS.AES.encrypt(text, secretKey).toString();
-}
-
-function decrypt(ciphertext) {
-    const bytes = CryptoJS.AES.decrypt(ciphertext, secretKey);
-    return bytes.toString(CryptoJS.enc.Utf8);
-}
+    const encrypted = CryptoJS.AES.encrypt(text, key, { iv: iv }).toString();
+    return iv.toString(CryptoJS.enc.Hex) + encrypted;
+  }
+  
+  function decrypt(ciphertext) {
+    const ivHex = ciphertext.substr(0, 32); // Assuming IV is 16 bytes (32 hex characters)
+    const encrypted = ciphertext.substr(32);
+    const decrypted = CryptoJS.AES.decrypt(encrypted, key, {
+      iv: CryptoJS.enc.Hex.parse(ivHex),
+    }).toString(CryptoJS.enc.Utf8);
+    return decrypted;
+  }  
 
 mongoose
   .connect(process.env.MONGODB_URL)
