@@ -15,7 +15,7 @@ const crypto = require("crypto");
 
 const app = express();
 const algorithm = "aes-256-cbc";
-const key = crypto.scryptSync(process.env.ENCRYPTION_KEY, "salt", 32);
+const key = crypto.scryptSync(process.env.SECRET, "salt", 32);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
