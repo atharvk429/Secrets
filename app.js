@@ -11,10 +11,11 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const findOrCreatePlugin = require("mongoose-findorcreate");
-const crypto = require('crypto');
+const Cryptr = require("cryptr");
 
 const app = express();
 const key = process.env.SECRET;
+const cryptr = new Cryptr(key);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -30,20 +31,6 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-function encrypt(text){
-  var cipher = crypto.createCipher('aes-256-cbc', key)
-  var crypted = cipher.update(text,'utf8','hex')
-  crypted += cipher.final('hex');
-  return crypted;
-}
-
-function decrypt(text){
-  var decipher = crypto.createDecipher('aes-256-cbc',key)
-  var dec = decipher.update(text,'hex','utf8')
-  dec += decipher.final('utf8');
-  return dec;
-}
 
 mongoose
   .connect(process.env.MONGODB_URL)
@@ -133,7 +120,7 @@ app.get("/secrets", function (req, res) {
       const usersWithDecryptedSecrets = foundUsers.map(user => {
         return {
             ...user.toObject(),
-            secret: decrypt(user.secret) // Assuming you have a decrypt function
+            secret: cryptr.decrypt(user.secret) // Assuming you have a decrypt function
         };
       });
       res.render("secrets", { usersWithSecrets: usersWithDecryptedSecrets });
@@ -153,7 +140,7 @@ app.get("/submit", function (req, res) {
 
 app.post("/submit", function (req, res) {
   const submittedSecret = req.body.secret;
-  const encryptedSecret = encrypt(submittedSecret);
+  const encryptedSecret = cryptr.encrypt(submittedSecret);
 
   User.findOne({ _id: req.user._id })
     .then(function (foundUser) {
