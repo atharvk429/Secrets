@@ -161,7 +161,7 @@ app.post("/submit", function (req, res) {
   encryptedSecret += cipher.final('hex');
   const base64Data = iv.toString('base64');
 
-  User.findOne({ _id: req.user._id })
+  User.findOne({ username: req.user.username })
     .then(function (foundUser) {
       if (foundUser) {
         console.log("user -> ", foundUser.username);
