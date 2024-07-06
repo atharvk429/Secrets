@@ -18,7 +18,7 @@ const axios = require("axios");
 const app = express();
 const algorithm = 'aes-256-cbc';
 const key = process.env.SECRET;
-const iv = crypto.randomBytes(16);
+// const iv = crypto.randomBytes(16);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -176,6 +176,7 @@ app.get("/submit", function (req, res) {
 
 app.post("/submit", function (req, res) {
   const submittedSecret = req.body.secret;
+  const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(algorithm, key, iv);
   let encryptedSecret = cipher.update(submittedSecret, 'utf8', 'hex');
   encryptedSecret += cipher.final('hex');
