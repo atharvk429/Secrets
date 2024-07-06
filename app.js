@@ -121,15 +121,33 @@ app.get("/secrets", function (req, res) {
   User.find({ secret: { $ne: null } })
     .then(function (foundUsers) {
       const usersWithDecryptedSecrets = foundUsers.map(user => {
-        const originaliv = Buffer.from(user.iv, 'base64');
-        const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
-        let originalSecret = decipher.update(user.secret, "hex", "utf-8");
-        originalSecret += decipher.final("utf8");
+        if (!user.iv || !user.secret) {
+          console.error("IV or secret missing for user: ", user.username);
+          return user.toObject();
+        }
+        // const originaliv = Buffer.from(user.iv, 'base64');
+        // const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
+        // let originalSecret = decipher.update(user.secret, "hex", "utf-8");
+        // originalSecret += decipher.final("utf8");
 
-        return {
+        // return {
+        //     ...user.toObject(),
+        //     secret: originalSecret
+        // };
+        try {
+          const originaliv = Buffer.from(user.iv, 'base64');
+          const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
+          let originalSecret = decipher.update(user.secret, "hex", "utf-8");
+          originalSecret += decipher.final("utf8");
+
+          return {
             ...user.toObject(),
             secret: originalSecret
-        };
+          };
+        } catch (error) {
+          console.error("Error decrypting secret for user:", user.username, error);
+          return user.toObject();
+        }
       });
       res.render("secrets", { usersWithSecrets: usersWithDecryptedSecrets });
     })
