@@ -13,6 +13,7 @@ const findOrCreate = require("mongoose-findorcreate");
 const findOrCreatePlugin = require("mongoose-findorcreate");
 const crypto = require("crypto");
 var assert = require('assert');
+const { default: axios } = require("axios");
 
 const app = express();
 const algorithm = 'aes-256-cbc';
@@ -76,7 +77,10 @@ passport.use(
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
       scope: ["profile", "email"],
     },
-    function (accessToken, refreshToken, profile, email, cb) {
+    async function (accessToken, refreshToken, profile, cb) {
+      const response = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+      const email = response.data.email;
+      console.log(response.data);
       console.log(email);
       // const email =
         // profile.emails && profile.emails[0] && profile.emails[0].value;
