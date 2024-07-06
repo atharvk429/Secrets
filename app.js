@@ -77,13 +77,10 @@ passport.use(
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
       scope: ["profile", "email"],
     },
-    async function (accessToken, refreshToken, profile, cb) {
-      const response = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
-      const email = response.data.email;
-      console.log(response.data);
+    async function (accessToken, refreshToken, profile, email, cb) {
       console.log(email);
       // const email =
-        // profile.emails && profile.emails[0] && profile.emails[0].value;
+      // profile.emails && profile.emails[0] && profile.emails[0].value;
       const username = `user_${profile.id}`;
 
       User.findOrCreate(
