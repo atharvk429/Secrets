@@ -80,31 +80,29 @@ passport.use(
     async function (accessToken, refreshToken, profile, email, cb) {
       try {
         const username = email.emails[0].value;
-        console.log("email -> ", email);
-        console.log("id -> ", email.id);
 
-        // User.findOrCreate(
-        //   { googleId: profile.id },
-        //   { username: username },
-        //   function (err, user) {
-        //     return cb(err, user);
-        //   }
-        // );
-        const existingUser = await User.findOne({ username: username });
+        User.findOrCreate(
+          { googleId: email.id },
+          { username: username },
+          function (err, user) {
+            return cb(err, user);
+          }
+        );
+        // const existingUser = await User.findOne({ googleId: email.id });
 
-        if (existingUser) {
-          // If user exists, simply return the user
-          return cb(null, existingUser);
-        } else {
-          // If user doesn't exist, create a new user
-          const newUser = new User({
-            username: username,
-            googleId: profile.id,
-          });
+        // if (existingUser) {
+        //   // If user exists, simply return the user
+        //   return cb(null, existingUser);
+        // } else {
+        //   // If user doesn't exist, create a new user
+        //   const newUser = new User({
+        //     username: username,
+        //     googleId: email.id,
+        //   });
 
-          await newUser.save();
-          return cb(null, newUser);
-        }
+        //   await newUser.save();
+        //   return cb(null, newUser);
+        // }
       }
       catch(err) {
         return cb(err, null);
