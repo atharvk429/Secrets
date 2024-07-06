@@ -45,7 +45,7 @@ mongoose
 
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
-  iv: Buffer,
+  iv: String,
   email: String,
   password: String,
   googleId: String,
@@ -171,7 +171,7 @@ app.post("/submit", function (req, res) {
   const cipher = crypto.createCipheriv(algorithm, key, iv);
   let encryptedSecret = cipher.update(submittedSecret, 'utf8', 'hex');
   encryptedSecret += cipher.final('hex');
-  const base64Data = Buffer.from(iv, 'binary').toString('base64');
+  const base64Data = iv.toString('base64');
 
   User.findOne({ _id: req.user._id })
     .then(function (foundUser) {
