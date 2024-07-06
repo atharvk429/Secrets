@@ -11,16 +11,13 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const findOrCreatePlugin = require("mongoose-findorcreate");
-// const Cryptr = require("cryptr");
 const crypto = require("crypto");
 var assert = require('assert');
 
 const app = express();
+const algorithm = 'aes-256-cbc';
 const key = process.env.SECRET;
-const algorithm = 'aes-128-cbc';
-const cipher = crypto.createCipher(algorithm, key);
-const decipher = crypto.createDecipher(algorithm, key);
-// const cryptr = new Cryptr(key);
+const iv = crypto.randomBytes(16);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -48,6 +45,7 @@ mongoose
 
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
+  iv: String,
   email: String,
   password: String,
   googleId: String,
@@ -123,10 +121,14 @@ app.get("/secrets", function (req, res) {
   User.find({ secret: { $ne: null } })
     .then(function (foundUsers) {
       const usersWithDecryptedSecrets = foundUsers.map(user => {
+        const originaliv = Buffer.from(user.iv, 'base64');
+        const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
+        let originalSecret = decipher.update(user.secret, "hex", "utf-8");
+        originalSecret += decipher.final("utf8");
+
         return {
             ...user.toObject(),
-            // secret: cryptr.decrypt(user.secret) // Assuming you have a decrypt function
-            secret: decipher.update(user.secret, 'hex', 'utf8') + decipher.final('utf8')
+            secret: originalSecret
         };
       });
       res.render("secrets", { usersWithSecrets: usersWithDecryptedSecrets });
@@ -146,13 +148,15 @@ app.get("/submit", function (req, res) {
 
 app.post("/submit", function (req, res) {
   const submittedSecret = req.body.secret;
-  // const encryptedSecret = cryptr.encrypt(submittedSecret);
-  const encryptedSecret = cipher.update(submittedSecret, 'utf8', 'hex');
+  const cipher = crypto.createCipheriv(algorithm, key, iv);
+  let encryptedSecret = cipher.update(submittedSecret, 'utf8', 'hex');
   encryptedSecret += cipher.final('hex');
+  const base64Data = Buffer.from(iv, 'binary').toString('base64');
 
   User.findOne({ _id: req.user._id })
     .then(function (foundUser) {
       if (foundUser) {
+        foundUser.iv=base64Data;
         foundUser.secret = encryptedSecret;
         foundUser.save();
         res.redirect("/secrets");
