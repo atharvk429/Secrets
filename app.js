@@ -76,10 +76,10 @@ passport.use(
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
       scope: ["profile", "email"],
     },
-    function (accessToken, refreshToken, profile, cb) {
-      console.log(profile);
-      const email =
-        profile.emails && profile.emails[0] && profile.emails[0].value;
+    function (accessToken, refreshToken, profile, email, cb) {
+      console.log(email);
+      // const email =
+        // profile.emails && profile.emails[0] && profile.emails[0].value;
       const username = email || `user_${profile.id}`;
 
       User.findOrCreate(
