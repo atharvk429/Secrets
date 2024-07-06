@@ -99,7 +99,7 @@ passport.use(
     //     return cb(err, null);
     //   }
     // }
-    async function (accessToken, refreshToken, profile, cb) {
+    async function (accessToken, refreshToken, profile, email, cb) {
       try {
         const googleId = email.id;
         const username = email.emails[0].value;
