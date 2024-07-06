@@ -88,7 +88,7 @@ passport.use(
         //     return cb(err, user);
         //   }
         // );
-        const existingUser = await User.findOne({ googleId: profile.id });
+        const existingUser = await User.findOne({ username: username });
 
         if (existingUser) {
           // If user exists, simply return the user
