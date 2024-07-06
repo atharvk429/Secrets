@@ -16,8 +16,7 @@ var assert = require('assert');
 
 const app = express();
 const algorithm = 'aes-256-cbc';
-// const key = process.env.SECRET;
-const key = Buffer.from(process.env.SECRET, 'base64');
+const key = process.env.SECRET;
 const iv = crypto.randomBytes(16);
 
 app.use(express.static("public"));
