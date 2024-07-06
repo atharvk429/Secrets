@@ -45,7 +45,7 @@ mongoose
 
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
-  iv: String,
+  iv: Buffer,
   email: String,
   password: String,
   googleId: String,
