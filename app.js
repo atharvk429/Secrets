@@ -223,17 +223,59 @@ app.post("/login", function (req, res) {
     return res.redirect("/login");
   }
 
-  const user = new User({
-    username: req.body.username,
-    password: req.body.password,
-  });
+  // const user = new User({
+  //   username: req.body.username,
+  //   password: req.body.password,
+  // });
 
-  req.login(user, function (err) {
+  // req.login(user, function (err) {
+  //   if (err) {
+  //     console.log(err);
+  //   } else {
+  //     passport.authenticate("local")(req, res, function () {
+  //       res.redirect("/secrets");
+  //     });
+  //   }
+  // });
+
+  User.findOne({ username: username }, function (err, foundUser) {
     if (err) {
       console.log(err);
+      return res.redirect("/login");
+    }
+
+    if (!foundUser) {
+      // If user doesn't exist, redirect to register page
+      return res.redirect("/register");
+    }
+
+    // If user exists, proceed with password check and login
+    if (!foundUser.password) {
+      // If user exists but doesn't have a password, update it
+      foundUser.setPassword(password, function (err) {
+        if (err) {
+          console.log(err);
+          return res.redirect("/login");
+        }
+        foundUser.save();
+        req.login(foundUser, function (err) {
+          if (err) {
+            console.log(err);
+          }
+          passport.authenticate("local")(req, res, function () {
+            res.redirect("/secrets");
+          });
+        });
+      });
     } else {
-      passport.authenticate("local")(req, res, function () {
-        res.redirect("/secrets");
+      // If user exists and password is set, proceed with login
+      req.login(foundUser, function (err) {
+        if (err) {
+          console.log(err);
+        }
+        passport.authenticate("local")(req, res, function () {
+          res.redirect("/secrets");
+        });
       });
     }
   });
