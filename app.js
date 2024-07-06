@@ -17,9 +17,9 @@ var assert = require('assert');
 
 const app = express();
 const key = process.env.SECRET;
-const algorithm = 'aes256';
+const algorithm = 'aes-128-cbc';
 const cipher = crypto.createCipher(algorithm, key);
-var decipher = crypto.createDecipher(algorithm, key);
+const decipher = crypto.createDecipher(algorithm, key);
 // const cryptr = new Cryptr(key);
 
 app.use(express.static("public"));
@@ -147,7 +147,8 @@ app.get("/submit", function (req, res) {
 app.post("/submit", function (req, res) {
   const submittedSecret = req.body.secret;
   // const encryptedSecret = cryptr.encrypt(submittedSecret);
-  const encryptedSecret = cipher.update(submittedSecret, 'utf8', 'hex') + cipher.final('hex');
+  const encryptedSecret = cipher.update(submittedSecret, 'utf8', 'hex');
+  encryptedSecret += cipher.final('hex');
 
   User.findOne({ _id: req.user._id })
     .then(function (foundUser) {
