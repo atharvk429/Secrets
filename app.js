@@ -76,19 +76,55 @@ passport.use(
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
       scope: ["profile", "email"],
     },
-    async function (accessToken, refreshToken, profile, email, cb) {
+    // async function (accessToken, refreshToken, profile, email, cb) {
+    //   try {
+    //     const username = email.emails[0].value;
+
+    //     User.findOne({username: username})
+    //       .then(function(foundUser)) {
+    //         if(!foundUser.googleId) {
+
+    //         }
+    //       }
+
+    //     User.findOrCreate(
+    //       { googleId: email.id },
+    //       { username: username },
+    //       function (err, user) {
+    //         return cb(err, user);
+    //       }
+    //     );
+    //   }
+    //   catch(err) {
+    //     return cb(err, null);
+    //   }
+    // }
+    async function (accessToken, refreshToken, profile, cb) {
       try {
+        const googleId = email.id;
         const username = email.emails[0].value;
 
-        User.findOrCreate(
-          { googleId: email.id },
-          { username: username },
-          function (err, user) {
-            return cb(err, user);
+        // Check if the user exists in the database
+        const existingUser = await User.findOne({ username: username });
+
+        if (existingUser) {
+          // If user already exists, check and update googleId if necessary
+          if (!existingUser.googleId) {
+            existingUser.googleId = googleId;
+            await existingUser.save();
           }
-        );
-      }
-      catch(err) {
+          return cb(null, existingUser);
+        } else {
+          // If user doesn't exist, create a new user with googleId
+          const newUser = new User({
+            username: username,
+            googleId: googleId,
+          });
+          await newUser.save();
+          return cb(null, newUser);
+        }
+      } catch (err) {
+        console.error("Error in Google OAuth strategy:", err);
         return cb(err, null);
       }
     }
