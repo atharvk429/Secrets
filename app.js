@@ -238,26 +238,33 @@ app.post("/login", function (req, res) {
   //   }
   // });
 
-  User.findOne({ username: username }, function (err, foundUser) {
-    if (err) {
-      console.log(err);
-      return res.redirect("/login");
-    }
+  User.findOne({ username: username })
+    .then(function (foundUser) {
+      if (!foundUser) {
+        // If user doesn't exist, redirect to register page
+        return res.redirect("/register");
+      }
 
-    if (!foundUser) {
-      // If user doesn't exist, redirect to register page
-      return res.redirect("/register");
-    }
-
-    // If user exists, proceed with password check and login
-    if (!foundUser.password) {
-      // If user exists but doesn't have a password, update it
-      foundUser.setPassword(password, function (err) {
-        if (err) {
-          console.log(err);
-          return res.redirect("/login");
-        }
-        foundUser.save();
+      // If user exists, proceed with password check and login
+      if (!foundUser.password) {
+        // If user exists but doesn't have a password, update it
+        foundUser.setPassword(password, function (err) {
+          if (err) {
+            console.log(err);
+            return res.redirect("/login");
+          }
+          foundUser.save();
+          req.login(foundUser, function (err) {
+            if (err) {
+              console.log(err);
+            }
+            passport.authenticate("local")(req, res, function () {
+              res.redirect("/secrets");
+            });
+          });
+        });
+      } else {
+        // If user exists and password is set, proceed with login
         req.login(foundUser, function (err) {
           if (err) {
             console.log(err);
@@ -266,19 +273,12 @@ app.post("/login", function (req, res) {
             res.redirect("/secrets");
           });
         });
-      });
-    } else {
-      // If user exists and password is set, proceed with login
-      req.login(foundUser, function (err) {
-        if (err) {
-          console.log(err);
-        }
-        passport.authenticate("local")(req, res, function () {
-          res.redirect("/secrets");
-        });
-      });
-    }
-  });
+      }
+    })
+    .catch(function (err) {
+      console.log(err);
+      return res.redirect("/login");
+    });
 });
 
 // app.listen(3000, function(){
