@@ -13,7 +13,7 @@ const findOrCreate = require("mongoose-findorcreate");
 const findOrCreatePlugin = require("mongoose-findorcreate");
 const crypto = require("crypto");
 var assert = require('assert');
-const { default: axios } = require("axios");
+const axios = require("axios");
 
 const app = express();
 const algorithm = 'aes-256-cbc';
