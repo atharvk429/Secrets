@@ -80,7 +80,7 @@ passport.use(
       console.log(email);
       // const email =
         // profile.emails && profile.emails[0] && profile.emails[0].value;
-      const username = email || `user_${profile.id}`;
+      const username = `user_${profile.id}`;
 
       User.findOrCreate(
         { googleId: profile.id },
@@ -129,10 +129,8 @@ app.get("/secrets", function (req, res) {
         try {
           const originaliv = Buffer.from(user.iv, 'base64');
           const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
-          console.log(originaliv);
           let originalSecret = decipher.update(user.secret, "hex", "utf-8");
           originalSecret += decipher.final("utf8");
-          console.log(originalSecret);
 
           return {
             ...user.toObject(),
