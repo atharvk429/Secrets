@@ -80,6 +80,8 @@ passport.use(
     async function (accessToken, refreshToken, profile, email, cb) {
       try {
         const username = email.emails[0].value;
+        console.log("email -> ", email);
+        console.log("profile -> ", profile);
 
         // User.findOrCreate(
         //   { googleId: profile.id },
