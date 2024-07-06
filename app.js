@@ -78,15 +78,35 @@ passport.use(
       scope: ["profile", "email"],
     },
     async function (accessToken, refreshToken, profile, email, cb) {
-      const username = email.emails[0].value;
+      try {
+        const username = email.emails[0].value;
 
-      User.findOrCreate(
-        { googleId: profile.id },
-        { username: username },
-        function (err, user) {
-          return cb(err, user);
+        // User.findOrCreate(
+        //   { googleId: profile.id },
+        //   { username: username },
+        //   function (err, user) {
+        //     return cb(err, user);
+        //   }
+        // );
+        const existingUser = await User.findOne({ googleId: profile.id });
+
+        if (existingUser) {
+          // If user exists, simply return the user
+          return cb(null, existingUser);
+        } else {
+          // If user doesn't exist, create a new user
+          const newUser = new User({
+            username: username,
+            googleId: profile.id,
+          });
+
+          await newUser.save();
+          return cb(null, newUser);
         }
-      );
+      }
+      catch(err) {
+        return cb(err, null);
+      }
     }
   )
 );
