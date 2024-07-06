@@ -137,8 +137,10 @@ app.get("/secrets", function (req, res) {
         try {
           const originaliv = Buffer.from(user.iv, 'base64');
           const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
+          console.log(originaliv);
           let originalSecret = decipher.update(user.secret, "hex", "utf-8");
           originalSecret += decipher.final("utf8");
+          console.log(originalSecret);
 
           return {
             ...user.toObject(),
