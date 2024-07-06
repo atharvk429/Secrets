@@ -81,7 +81,7 @@ passport.use(
       try {
         const username = email.emails[0].value;
         console.log("email -> ", email);
-        console.log("profile -> ", profile);
+        console.log("id -> ", email.id);
 
         // User.findOrCreate(
         //   { googleId: profile.id },
