@@ -44,7 +44,7 @@ mongoose
   });
 
 const userSchema = new mongoose.Schema({
-  // username: { type: String, unique: true },
+  username: { type: String, unique: true },
   iv: Buffer,
   email: String,
   password: String,
@@ -79,11 +79,11 @@ passport.use(
     function (accessToken, refreshToken, profile, cb) {
       const email =
         profile.emails && profile.emails[0] && profile.emails[0].value;
-      // const username = email || `user_${profile.id}`;
+      const username = email || `user_${profile.id}`;
 
       User.findOrCreate(
         { googleId: profile.id },
-        // { username: email },
+        { username: email },
         function (err, user) {
           return cb(err, user);
         }
