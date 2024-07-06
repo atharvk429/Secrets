@@ -12,8 +12,7 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const findOrCreatePlugin = require("mongoose-findorcreate");
 const crypto = require("crypto");
-var assert = require('assert');
-const axios = require("axios");
+const MongoStore = require("connect-mongo");
 
 const app = express();
 const algorithm = 'aes-256-cbc';
@@ -28,6 +27,10 @@ app.use(
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URL,
+      collectionName: "sessions"
+    })
   })
 );
 
@@ -76,46 +79,20 @@ passport.use(
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
       scope: ["profile", "email"],
     },
-    // async function (accessToken, refreshToken, profile, email, cb) {
-    //   try {
-    //     const username = email.emails[0].value;
-
-    //     User.findOne({username: username})
-    //       .then(function(foundUser)) {
-    //         if(!foundUser.googleId) {
-
-    //         }
-    //       }
-
-    //     User.findOrCreate(
-    //       { googleId: email.id },
-    //       { username: username },
-    //       function (err, user) {
-    //         return cb(err, user);
-    //       }
-    //     );
-    //   }
-    //   catch(err) {
-    //     return cb(err, null);
-    //   }
-    // }
     async function (accessToken, refreshToken, profile, email, cb) {
       try {
         const googleId = email.id;
         const username = email.emails[0].value;
 
-        // Check if the user exists in the database
         const existingUser = await User.findOne({ username: username });
 
         if (existingUser) {
-          // If user already exists, check and update googleId if necessary
           if (!existingUser.googleId) {
             existingUser.googleId = googleId;
             await existingUser.save();
           }
           return cb(null, existingUser);
         } else {
-          // If user doesn't exist, create a new user with googleId
           const newUser = new User({
             username: username,
             googleId: googleId,
@@ -259,31 +236,13 @@ app.post("/login", function (req, res) {
     return res.redirect("/login");
   }
 
-  // const user = new User({
-  //   username: req.body.username,
-  //   password: req.body.password,
-  // });
-
-  // req.login(user, function (err) {
-  //   if (err) {
-  //     console.log(err);
-  //   } else {
-  //     passport.authenticate("local")(req, res, function () {
-  //       res.redirect("/secrets");
-  //     });
-  //   }
-  // });
-
   User.findOne({ username: username })
     .then(function (foundUser) {
       if (!foundUser) {
-        // If user doesn't exist, redirect to register page
         return res.redirect("/register");
       }
 
-      // If user exists, proceed with password check and login
       if (!foundUser.password) {
-        // If user exists but doesn't have a password, update it
         foundUser.setPassword(password, function (err) {
           if (err) {
             console.log(err);
@@ -300,7 +259,6 @@ app.post("/login", function (req, res) {
           });
         });
       } else {
-        // If user exists and password is set, proceed with login
         req.login(foundUser, function (err) {
           if (err) {
             console.log(err);
