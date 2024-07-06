@@ -18,7 +18,6 @@ const axios = require("axios");
 const app = express();
 const algorithm = 'aes-256-cbc';
 const key = process.env.SECRET;
-// const iv = crypto.randomBytes(16);
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -88,21 +87,6 @@ passport.use(
             return cb(err, user);
           }
         );
-        // const existingUser = await User.findOne({ googleId: email.id });
-
-        // if (existingUser) {
-        //   // If user exists, simply return the user
-        //   return cb(null, existingUser);
-        // } else {
-        //   // If user doesn't exist, create a new user
-        //   const newUser = new User({
-        //     username: username,
-        //     googleId: email.id,
-        //   });
-
-        //   await newUser.save();
-        //   return cb(null, newUser);
-        // }
       }
       catch(err) {
         return cb(err, null);
@@ -185,7 +169,6 @@ app.post("/submit", function (req, res) {
   User.findOne({ username: req.user.username })
     .then(function (foundUser) {
       if (foundUser) {
-        console.log("user -> ", foundUser.username);
         foundUser.iv=base64Data;
         foundUser.secret = encryptedSecret;
         foundUser.save();
