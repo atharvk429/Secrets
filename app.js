@@ -164,6 +164,7 @@ app.post("/submit", function (req, res) {
   User.findOne({ _id: req.user._id })
     .then(function (foundUser) {
       if (foundUser) {
+        console.log("user -> ", foundUser.username);
         foundUser.iv=base64Data;
         foundUser.secret = encryptedSecret;
         foundUser.save();
