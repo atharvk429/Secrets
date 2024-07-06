@@ -78,12 +78,7 @@ passport.use(
       scope: ["profile", "email"],
     },
     async function (accessToken, refreshToken, profile, email, cb) {
-      console.log("address: ->", email.emails[0].value);
-      console.log("email: ->", email);
-      console.log("profile: ->", profile);
-      // const email =
-      // profile.emails && profile.emails[0] && profile.emails[0].value;
-      const username = `user_${profile.id}`;
+      const username = email.emails[0].value;
 
       User.findOrCreate(
         { googleId: profile.id },
