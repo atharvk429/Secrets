@@ -83,7 +83,7 @@ passport.use(
 
       User.findOrCreate(
         { googleId: profile.id },
-        { username: email },
+        { username: username },
         function (err, user) {
           return cb(err, user);
         }
@@ -125,15 +125,6 @@ app.get("/secrets", function (req, res) {
           console.error("IV or secret missing for user: ", user.username);
           return user.toObject();
         }
-        // const originaliv = Buffer.from(user.iv, 'base64');
-        // const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
-        // let originalSecret = decipher.update(user.secret, "hex", "utf-8");
-        // originalSecret += decipher.final("utf8");
-
-        // return {
-        //     ...user.toObject(),
-        //     secret: originalSecret
-        // };
         try {
           const originaliv = Buffer.from(user.iv, 'base64');
           const decipher = crypto.createDecipheriv(algorithm, key, originaliv);
