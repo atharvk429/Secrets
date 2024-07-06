@@ -29,7 +29,8 @@ app.use(
     saveUninitialized: false,
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URL,
-      collectionName: "sessions"
+      collectionName: "sessions",
+      ttl: 60 * 60
     })
   })
 );
